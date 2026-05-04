@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>HMS — Patient Relations</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body{background:#f8faff}
+.page-header{
+  background:linear-gradient(135deg,#064e3b,#065f46);
+  color:white;
+  padding:24px 32px
+}
+.card{
+  border-radius:12px;
+  border:1px solid #e2e8f0;
+}
+.section-title{
+  font-size:14px;
+  font-weight:600;
+  color:#475569;
+  text-transform:uppercase;
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-dark px-4" style="background:#0a1628">
+  <span class="navbar-brand fw-bold">🏥 HMS Portal</span>
+</nav>
+
+<!-- HEADER -->
+<div class="page-header">
+  <small class="opacity-50">Home / Patient / Relations</small>
+  <h4 class="mb-0 mt-1">Patient Relations</h4>
+</div>
+
+<div class="container-fluid px-4 py-4">
+
+  <!-- 🔽 SELECT PATIENT -->
+  <div class="card p-3 mb-3">
+    <form method="get">
+      <label class="form-label">Select Patient</label>
+      <select name="id" class="form-select w-auto" onchange="this.form.submit()">
+
+        <option th:each="p : ${allItems}"
+                th:value="${p['ssn']}"
+                th:text="${p['ssn']} + ' — ' + ${p['name']}"
+                th:selected="${p['ssn']} == ${selectedId}">
+        </option>
+
+      </select>
+    </form>
+  </div>
+
+  <!-- 🔷 PATIENT DETAILS -->
+  <div class="card p-3 mb-3" th:if="${selectedItem != null}">
+    <h5 th:text="${selectedItem['name']}"></h5>
+
+    <div class="mt-2">
+      <b>SSN:</b> <span th:text="${selectedItem['ssn']}"></span><br>
+      <b>Phone:</b> <span th:text="${selectedItem['phone']}"></span><br>
+      <b>Address:</b> <span th:text="${selectedItem['address']}"></span><br>
+      <b>Insurance:</b> <span th:text="${selectedItem['insuranceId']}"></span><br>
+      <b>PCP:</b>
+      <span th:text="${selectedItem['pcpName']}"></span>
+      (<span th:text="${selectedItem['pcpId']}"></span>)
+    </div>
+  </div>
+
+  <div class="row g-3">
+
+    <!-- 📅 APPOINTMENTS -->
+    <div class="col-md-6">
+      <div class="card p-3">
+        <div class="section-title mb-2">Appointments</div>
+
+        <div th:each="a : ${apptList}" class="mb-3 border-bottom pb-2">
+
+          <b>Appointment ID:</b> <span th:text="${a['appointmentId']}"></span><br>
+          <b>Room:</b> <span th:text="${a['examinationRoom']}"></span><br>
+          <b>Start:</b> <span th:text="${a['starto']}"></span><br>
+          <b>End:</b> <span th:text="${a['endo']}"></span>
+
+        </div>
+
+        <div th:if="${#lists.isEmpty(apptList)}" class="text-muted">
+          No appointments found
+        </div>
+      </div>
+    </div>
+
+    <!-- 💊 PRESCRIPTIONS -->
+    <div class="col-md-6">
+      <div class="card p-3">
+        <div class="section-title mb-2">Prescriptions</div>
+
+        <div th:each="rx : ${prescList}" class="mb-3 border-bottom pb-2">
+
+          <b>Medication ID:</b> <span th:text="${rx['medication']}"></span><br>
+          <b>Dose:</b> <span th:text="${rx['dose']}"></span><br>
+          <b>Date:</b> <span th:text="${rx['date']}"></span>
+
+        </div>
+
+        <div th:if="${#lists.isEmpty(prescList)}" class="text-muted">
+          No prescriptions found
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

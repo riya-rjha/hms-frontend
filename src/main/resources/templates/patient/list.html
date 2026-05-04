@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8"><title>HMS — Patient Module</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body{background:#f8faff}
+.page-header{background:linear-gradient(135deg,#064e3b,#065f46);color:white;padding:24px 32px}
+.card{border-radius:12px;border:1px solid #e2e8f0}
+</style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-dark px-4" style="background:#0a1628">
+  <span class="navbar-brand fw-bold">🏥 HMS Portal</span>
+</nav>
+
+<div class="container mt-4">
+
+<table class="table table-sm table-hover">
+<tr th:each="p : ${items}">
+
+<td th:text="${p['ssn']}"></td>
+
+<td>
+<a th:href="@{/patient/relations(id=${p['ssn']})}"
+   th:text="${p['name']}"></a>
+</td>
+
+<td th:text="${p['phone']}"></td>
+<td th:text="${p['address']}"></td>
+<td th:text="${p['insuranceId']}"></td>
+
+<td>
+<span th:text="${p['pcpName']}"></span>
+(ID: <span th:text="${p['pcpId']}"></span>)
+</td>
+
+<td>
+<button
+th:attr="data-ssn=${p['ssn']},
+         data-name=${p['name']},
+         data-address=${p['address']},
+         data-phone=${p['phone']},
+         data-insurance=${p['insuranceId']},
+         data-pcp=${p['pcpId']}"
+onclick="handleEdit(this)">
+Edit
+</button>
+</td>
+
+</tr>
+</table>
+
+</div>
+
+<script>
+function handleEdit(btn){
+const ssn = btn.getAttribute("data-ssn");
+const name = btn.getAttribute("data-name");
+const address = btn.getAttribute("data-address");
+const phone = btn.getAttribute("data-phone");
+const insurance = btn.getAttribute("data-insurance");
+const pcp = btn.getAttribute("data-pcp");
+
+fillEditForm(ssn,name,address,phone,insurance,pcp);
+}
+</script>
+
+</body>
+</html>
