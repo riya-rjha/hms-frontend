@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8"><title>HMS — Appointment Relations</title>
+<meta charset="UTF-8">
+<title>HMS — Appointment Relations</title>
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
 <style>
 body{background:#f8faff}
 .page-header{background:linear-gradient(135deg,#1e3a5f,#1e3a8f);color:white;padding:24px 32px}
@@ -15,7 +18,9 @@ body{background:#f8faff}
 footer{background:#060e1c;color:rgba(255,255,255,.4);padding:12px;text-align:center;font-size:11px;margin-top:30px}
 </style>
 </head>
+
 <body>
+
 <nav class="navbar navbar-dark px-4" style="background:#0a1628">
   <span class="navbar-brand fw-bold">🏥 HMS Portal</span>
   <div>
@@ -32,90 +37,119 @@ footer{background:#060e1c;color:rgba(255,255,255,.4);padding:12px;text-align:cen
 </div>
 
 <div class="container-fluid px-4 py-3">
-  <div th:if="${error}" class="alert alert-danger" th:text="'Backend Error: ' + ${error}"></div>
 
-  <!-- Selector -->
-  <div class="card p-3 mb-3" style="border-radius:12px">
-    <form action="/appointment/relations" method="get" class="d-flex gap-2 align-items-center flex-wrap">
-      <label class="fw-semibold me-2">Select Appointment:</label>
-      <select name="id" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+  <div th:if="${error}" class="alert alert-danger"
+       th:text="'Backend Error: ' + ${error}"></div>
+
+  <!-- SELECTOR -->
+  <div class="card p-3 mb-3">
+    <form method="get" class="d-flex gap-2 align-items-center flex-wrap">
+      <label class="fw-semibold">Select Appointment:</label>
+
+      <select name="id" class="form-select form-select-sm w-auto"
+              onchange="this.form.submit()">
+
         <option value="">-- Choose --</option>
+
         <option th:each="a : ${allItems}"
-                th:value="${a.appointmentId}"
-                th:text="'#' + ${a.appointmentId} + ' — ' + ${a.patientName} + ' / ' + ${a.physicianName}"
-                th:selected="${a.appointmentId == selectedId}">
+                th:value="${a['appointmentId']}"
+                th:text="'#' + ${a['appointmentId']} + ' — ' + ${a['patientName']} + ' / ' + ${a['physicianName']}"
+                th:selected="${a['appointmentId']} == ${selectedId}">
         </option>
+
       </select>
+
       <button class="btn btn-sm" style="background:#1d4ed8;color:white">Load</button>
     </form>
   </div>
 
-  <!-- Appointment Detail Banner -->
+  <!-- APPOINTMENT DETAILS -->
   <div class="alert d-flex align-items-center gap-3 mb-3"
        style="background:linear-gradient(135deg,#1e3a5f,#1e3a8f);color:white;border:none;border-radius:12px"
        th:if="${selectedItem != null}">
-    <div style="width:48px;height:48px;border-radius:50%;background:rgba(59,130,246,.4);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📅</div>
-    <div style="flex:1">
-      <div class="fw-bold fs-5">Appointment #<span th:text="${selectedItem.appointmentId}"></span></div>
-      <div style="opacity:.8;font-size:13px">
-        Room: <strong th:text="${selectedItem.examinationRoom}"></strong> &nbsp;|&nbsp;
-        Start: <span th:text="${selectedItem.starto}"></span>
+
+    <div style="width:48px;height:48px;border-radius:50%;background:rgba(59,130,246,.4);display:flex;align-items:center;justify-content:center;font-size:20px">📅</div>
+
+    <div>
+      <div class="fw-bold fs-5">
+        Appointment #<span th:text="${selectedItem['appointmentId']}"></span>
       </div>
-      <div style="opacity:.6;font-size:12px">
-        End: <span th:text="${selectedItem.endo}"></span>
+
+      <div style="font-size:13px">
+        Room: <strong th:text="${selectedItem['examinationRoom']}"></strong> |
+        Start: <span th:text="${selectedItem['starto']}"></span>
+      </div>
+
+      <div style="font-size:12px">
+        End: <span th:text="${selectedItem['endo']}"></span>
       </div>
     </div>
-    <div class="ms-auto" style="font-family:monospace;font-size:11px;opacity:.5">GET /api/appointments/<span th:text="${selectedId}"></span></div>
+
   </div>
 
-  <!-- Prescriptions -->
+  <!-- PRESCRIPTIONS -->
   <div class="rel-card bg-white">
+
     <div class="rel-header" style="background:#f0fdf4">
-      <span class="fw-semibold" style="color:#15803d">💊 Prescriptions for this Appointment</span>
-      <span class="badge" style="background:#dcfce7;color:#15803d;font-size:10px">
-        <span th:text="${#lists.size(prescList)}">0</span> prescriptions
+      <span class="fw-semibold" style="color:#15803d">💊 Prescriptions</span>
+      <span class="badge" style="background:#dcfce7;color:#15803d">
+        <span th:text="${#lists.size(prescList)}"></span> items
       </span>
     </div>
+
     <div class="rel-body">
+
       <div th:each="rx : ${prescList}" class="item-row">
+
         <div class="item-av" style="background:#10b981">Rx</div>
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:600">
-            <span th:text="${rx.medicationName}"></span>
-            <span style="color:#64748b;font-weight:400;font-size:12px" th:if="${rx.medicationBrand != null}"> — <span th:text="${rx.medicationBrand}"></span></span>
+
+        <div>
+
+          <div>
+            <b>Medication:</b>
+            <span th:text="${rx['medicationName']} ?: ${rx['medication']}"></span>
           </div>
-          <div style="font-size:12px;color:#64748b;margin-top:4px">
-            <strong>Dose:</strong> <span th:text="${rx.dose}"></span>
+
+          <div>
+            <b>Dose:</b>
+            <span th:text="${rx['dose']}"></span>
           </div>
-          <div style="font-size:12px;color:#64748b">
-            <strong>Date:</strong> <span th:text="${rx.date}"></span>
+
+          <div>
+            <b>Date:</b>
+            <span th:text="${rx['date']}"></span>
           </div>
-          <div style="font-size:12px;color:#64748b">
-            <strong>Physician:</strong>
-            <a th:href="@{/physician/relations(id=${rx.physicianId})}"
-               class="text-decoration-none" style="color:#1d4ed8"
-               th:text="${rx.physicianName}"></a>
-            (ID: <span th:text="${rx.physicianId}"></span>)
+
+          <div>
+            <b>Physician:</b>
+            <a th:href="@{/physician/relations(id=${rx['physicianId']})}"
+               th:text="${rx['physicianName']}"></a>
           </div>
-          <div style="font-size:12px;color:#64748b">
-            <strong>Patient:</strong>
-            <a th:href="@{/patient/relations(id=${rx.patientSsn})}"
-               class="text-decoration-none" style="color:#065f46"
-               th:text="${rx.patientName}"></a>
-            (SSN: <span th:text="${rx.patientSsn}"></span>)
+
+          <div>
+            <b>Patient:</b>
+            <a th:href="@{/patient/relations(id=${rx['patientSsn']})}"
+               th:text="${rx['patientName']}"></a>
           </div>
+
         </div>
-        <span class="badge" style="background:#dcfce7;color:#15803d">Active</span>
+
       </div>
-      <div th:if="${#lists.isEmpty(prescList)}" class="text-center text-muted py-4" style="font-size:13px">
-        No prescriptions linked to this appointment
+
+      <div th:if="${#lists.isEmpty(prescList)}"
+           class="text-center text-muted py-4">
+        No prescriptions found
       </div>
+
     </div>
+
   </div>
 
 </div>
 
-<footer>HMS — Appointment Relations | RestTemplate → localhost:8082 | 2026</footer>
+<footer>HMS — Appointment Relations</footer>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>

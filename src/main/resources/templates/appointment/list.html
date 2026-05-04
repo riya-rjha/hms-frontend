@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8"><title>HMS — Appointment Module</title>
+<meta charset="UTF-8">
+<title>HMS — Appointment Module</title>
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
 <style>
 body{background:#f8faff}
 .page-header{background:linear-gradient(135deg,#1e3a5f,#1e3a8f);color:white;padding:24px 32px}
@@ -11,192 +14,56 @@ footer{background:#060e1c;color:rgba(255,255,255,.4);padding:12px;text-align:cen
 .filter-active{border:2px solid #3b82f6 !important;background:#eff6ff !important}
 </style>
 </head>
+
 <body>
+
 <nav class="navbar navbar-dark px-4" style="background:#0a1628">
   <span class="navbar-brand fw-bold">🏥 HMS Portal</span>
-  <div>
-    <a class="btn btn-outline-light btn-sm me-1" href="/">Home</a>
-    <a class="btn btn-outline-light btn-sm me-1" href="/physician/list">Physician</a>
-    <a class="btn btn-outline-light btn-sm me-1" href="/patient/list">Patient</a>
-    <a class="btn btn-outline-light btn-sm me-1" href="/department/list">Department</a>
-    <a class="btn btn-outline-light btn-sm me-1" href="/nurse/list">Nurse</a>
-    <a class="btn btn-outline-light btn-sm me-1 active" href="/appointment/list">Appointment</a>
-    <a class="btn btn-outline-light btn-sm" href="/procedure/list">Procedure</a>
-  </div>
 </nav>
 
 <div class="page-header">
-  <small class="opacity-50">Home / Appointment</small>
-  <h4 class="mb-0 mt-1">Appointment Module</h4>
-  <small class="opacity-60">Member 5 · GET /api/appointments</small>
+  <small>Home / Appointment</small>
+  <h4>Appointment Module</h4>
 </div>
 
-<div class="container-fluid px-4 py-3">
-  <div th:if="${error}" class="alert alert-danger" th:text="'Backend Error: ' + ${error}"></div>
+<div class="container mt-4">
 
-  <div class="row g-3">
-    <div class="col-md-8">
+<table class="table table-sm table-hover">
 
-      <!-- Filter Panel -->
-      <div class="card p-3 mb-3">
-        <h6 class="text-muted text-uppercase mb-2" style="font-size:11px">Filter Appointments</h6>
-        <div class="d-flex flex-column gap-2">
-          <!-- Filter by Physician -->
-          <form action="/appointment/list" method="get" class="d-flex gap-2">
-            <input type="number" name="physician" class="form-control form-control-sm"
-                   placeholder="Filter by Physician ID..."
-                   th:value="${filterPhysician}"
-                   th:classappend="${filterPhysician != null} ? 'filter-active' : ''">
-            <button class="btn btn-sm btn-primary">By Physician</button>
-          </form>
-          <!-- Filter by Patient SSN -->
-          <form action="/appointment/list" method="get" class="d-flex gap-2">
-            <input type="number" name="patient" class="form-control form-control-sm"
-                   placeholder="Filter by Patient SSN..."
-                   th:value="${filterPatient}"
-                   th:classappend="${filterPatient != null} ? 'filter-active' : ''">
-            <button class="btn btn-sm" style="background:#10b981;color:white">By Patient</button>
-          </form>
-          <!-- Filter by Nurse -->
-          <form action="/appointment/list" method="get" class="d-flex gap-2">
-            <input type="number" name="nurse" class="form-control form-control-sm"
-                   placeholder="Filter by Prep Nurse ID..."
-                   th:value="${filterNurse}"
-                   th:classappend="${filterNurse != null} ? 'filter-active' : ''">
-            <button class="btn btn-sm" style="background:#8b5cf6;color:white">By Nurse</button>
-          </form>
-          <div class="d-flex gap-2 align-items-center">
-            <a href="/appointment/list" class="btn btn-sm btn-secondary">Clear All Filters</a>
-            <span th:if="${filterPhysician != null}" class="badge bg-primary">Physician: <span th:text="${filterPhysician}"></span></span>
-            <span th:if="${filterPatient != null}" class="badge" style="background:#10b981;color:white">Patient: <span th:text="${filterPatient}"></span></span>
-            <span th:if="${filterNurse != null}" class="badge" style="background:#8b5cf6;color:white">Nurse: <span th:text="${filterNurse}"></span></span>
-            <span class="badge bg-secondary" th:text="${#lists.size(items)} + ' result(s)'"></span>
-          </div>
-        </div>
-      </div>
+<tr th:each="a : ${items}">
 
-      <!-- Table -->
-      <div class="card p-3">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h6 class="text-muted text-uppercase mb-0" style="font-size:11px">Appointment List (most recent first)</h6>
-          <a href="/appointment/relations" class="btn btn-sm btn-outline-primary">View Relations →</a>
-        </div>
-        <div style="overflow-x:auto">
-        <table class="table table-sm table-hover">
-          <thead class="table-light">
-            <tr>
-              <th>Appt ID</th>
-              <th>Patient</th>
-              <th>Physician</th>
-              <th>Prep Nurse</th>
-              <th>Start</th>
-              <th>End</th>
-              <th>Room</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr th:each="a : ${items}">
-              <td style="font-family:monospace;font-size:12px;color:#64748b" th:text="${a.appointmentId}"></td>
-              <td>
-                <div style="font-size:13px;font-weight:500">
-                  <a th:href="@{/patient/relations(id=${a.patientSsn})}"
-                     class="text-decoration-none" style="color:#065f46"
-                     th:text="${a.patientName}"></a>
-                </div>
-                <div style="font-size:11px;color:#64748b;font-family:monospace" th:text="${a.patientSsn}"></div>
-              </td>
-              <td>
-                <div style="font-size:13px;font-weight:500">
-                  <a th:href="@{/physician/relations(id=${a.physicianId})}"
-                     class="text-decoration-none" style="color:#1d4ed8"
-                     th:text="${a.physicianName}"></a>
-                </div>
-                <div style="font-size:11px;color:#64748b;font-family:monospace" th:text="${a.physicianId}"></div>
-              </td>
-              <td>
-                <span th:if="${a.prepNurseName != null}" style="font-size:12px">
-                  <a th:href="@{/nurse/relations(id=${a.prepNurseId})}"
-                     class="text-decoration-none" style="color:#4c1d95"
-                     th:text="${a.prepNurseName}"></a>
-                </span>
-                <span th:if="${a.prepNurseName == null}" class="text-muted" style="font-size:12px">—</span>
-              </td>
-              <td style="font-size:12px" th:text="${a.starto}"></td>
-              <td style="font-size:12px" th:text="${a.endo}"></td>
-              <td>
-                <span class="badge" style="background:#eff6ff;color:#1d4ed8;font-size:11px" th:text="${a.examinationRoom}"></span>
-              </td>
-              <td>
-                <a th:href="@{/appointment/relations(id=${a.appointmentId})}" class="btn btn-sm btn-outline-info">Details</a>
-              </td>
-            </tr>
-            <tr th:if="${#lists.isEmpty(items)}">
-              <td colspan="8" class="text-center text-muted py-3">No appointments found</td>
-            </tr>
-          </tbody>
-        </table>
-        </div>
+<td th:text="${a['appointmentId']}"></td>
 
-        <!-- Pagination -->
-        <nav th:if="${totalPages > 1 and filterPhysician == null and filterPatient == null and filterNurse == null}">
-          <ul class="pagination pagination-sm">
-            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-              <a class="page-link" th:href="@{/appointment/list(page=${currentPage-1},size=${size})}">Prev</a>
-            </li>
-            <li class="page-item" th:each="i : ${#numbers.sequence(0,totalPages-1)}"
-                th:classappend="${i == currentPage} ? 'active'">
-              <a class="page-link" th:href="@{/appointment/list(page=${i},size=${size})}" th:text="${i+1}"></a>
-            </li>
-            <li class="page-item" th:classappend="${currentPage == totalPages-1} ? 'disabled'">
-              <a class="page-link" th:href="@{/appointment/list(page=${currentPage+1},size=${size})}">Next</a>
-            </li>
-          </ul>
-        </nav>
-      </div>
-    </div>
+<td>
+<a th:href="@{/patient/relations(id=${a['patientSsn']})}"
+   th:text="${a['patientName']}"></a>
+</td>
 
-    <!-- Right: Add Form -->
-    <div class="col-md-4">
-      <div class="card p-3">
-        <h5>Add Appointment</h5>
-        <span class="badge mb-3" style="background:#1d4ed8;color:white">POST /api/appointments</span>
-        <form action="/appointment/save" method="post">
-          <div class="mb-2">
-            <label class="form-label" style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase">Patient SSN *</label>
-            <input type="number" name="patientSsn" class="form-control form-control-sm" placeholder="e.g. 100000001" required>
-          </div>
-          <div class="mb-2">
-            <label class="form-label" style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase">Physician ID *</label>
-            <input type="number" name="physicianId" class="form-control form-control-sm" placeholder="e.g. 1" required>
-          </div>
-          <div class="mb-2">
-            <label class="form-label" style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase">Prep Nurse ID</label>
-            <input type="number" name="nurseId" class="form-control form-control-sm" placeholder="e.g. 101 (optional)">
-          </div>
-          <div class="mb-2">
-            <label class="form-label" style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase">Start Time *</label>
-            <input type="datetime-local" name="starto" class="form-control form-control-sm" required>
-          </div>
-          <div class="mb-2">
-            <label class="form-label" style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase">End Time *</label>
-            <input type="datetime-local" name="endo" class="form-control form-control-sm" required>
-          </div>
-          <div class="mb-2">
-            <label class="form-label" style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase">Examination Room *</label>
-            <input type="text" name="examinationRoom" class="form-control form-control-sm" placeholder="e.g. A" required>
-          </div>
-          <div class="d-flex gap-2 mt-3">
-            <button type="submit" class="btn btn-sm" style="background:#1d4ed8;color:white">Save</button>
-            <button type="reset" class="btn btn-sm btn-secondary">Clear</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+<td>
+<a th:href="@{/physician/relations(id=${a['physicianId']})}"
+   th:text="${a['physicianName']}"></a>
+</td>
+
+<td>
+<span th:text="${a['prepNurseName']} ?: '—'"></span>
+</td>
+
+<td th:text="${a['starto']}"></td>
+<td th:text="${a['endo']}"></td>
+
+<td th:text="${a['examinationRoom']}"></td>
+
+<td>
+<a th:href="@{/appointment/relations(id=${a['appointmentId']})}">
+Details
+</a>
+</td>
+
+</tr>
+
+</table>
+
 </div>
 
-<footer>HMS — Appointment Module | Member 5 | Backend: localhost:8082 | 2026</footer>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

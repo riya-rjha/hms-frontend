@@ -61,7 +61,7 @@ public class PhysicianController {
     public String relations(@RequestParam(defaultValue = "1") int id, Model model) {
 
         try {
-            // 🔹 ALL PHYSICIANS
+            // 🔹 All physicians
             ResponseEntity<Map> allRes = restTemplate.getForEntity(
                     backendUrl + "/physicians?size=100", Map.class);
 
@@ -73,7 +73,7 @@ public class PhysicianController {
             model.addAttribute("allItems", allPhysicians);
             model.addAttribute("selectedId", id);
 
-            // 🔹 SELECTED PHYSICIAN
+            // 🔹 Selected physician
             Map selected = restTemplate.getForObject(
                     backendUrl + "/physicians/" + id, Map.class);
 
@@ -89,7 +89,7 @@ public class PhysicianController {
 
             model.addAttribute("selectedItem", selected);
 
-            // 🔹 PATIENTS UNDER THIS PHYSICIAN
+            // 🔹 Patients under this physician
             ResponseEntity<Map> patRes = restTemplate.getForEntity(
                     backendUrl + "/patients/search/findByPcp_EmployeeId?employeeId=" + id,
                     Map.class);
@@ -99,52 +99,20 @@ public class PhysicianController {
 
             model.addAttribute("patList", patList);
 
-            // 🔥 FULL PRESCRIPTION LOGIC
-            ResponseEntity<Map> prescRes = restTemplate.getForEntity(
-                    backendUrl + "/prescriptions?size=100", Map.class);
+            // ✅ FIXED: Use search endpoint directly (NO manual filtering)
+            try {
+                ResponseEntity<Map> apptRes = restTemplate.getForEntity(
+                        backendUrl + "/appointments/search/findByPhysicianEntityEmployeeId?physician=" + id + "&size=20",
+                        Map.class);
 
-            Map prescEmb = prescRes.getBody() != null ? (Map) prescRes.getBody().get("_embedded") : null;
-            List<Map> allPresc = prescEmb != null ? (List<Map>) prescEmb.get("prescriptions") : new ArrayList<>();
+                Map apptEmb = apptRes.getBody() != null ? (Map) apptRes.getBody().get("_embedded") : null;
+                List<Map> apptList = apptEmb != null ? (List<Map>) apptEmb.get("appointments") : new ArrayList<>();
 
-            List<Map> prescList = new ArrayList<>();
+                model.addAttribute("apptList", apptList);
 
-            for (Map rx : allPresc) {
-                try {
-                    Map links = (Map) rx.get("_links");
-
-                    // 🔹 Extract physician ID
-                    Map phyLink = (Map) links.get("physician");
-                    String phyHref = (String) ((Map) phyLink).get("href");
-                    int phyId = Integer.parseInt(phyHref.substring(phyHref.lastIndexOf("/") + 1));
-
-                    if (phyId != id) continue;
-
-                    // 🔹 Extract patient
-                    Map patLink = (Map) links.get("patient");
-                    String patHref = (String) ((Map) patLink).get("href");
-                    int patientId = Integer.parseInt(patHref.substring(patHref.lastIndexOf("/") + 1));
-
-                    Map patient = restTemplate.getForObject(
-                            backendUrl + "/patients/" + patientId, Map.class);
-
-                    rx.put("patientName", patient != null ? patient.get("name") : patientId);
-
-                    // 🔹 Extract medication
-                    Map medLink = (Map) links.get("medication");
-                    String medHref = (String) ((Map) medLink).get("href");
-                    int medId = Integer.parseInt(medHref.substring(medHref.lastIndexOf("/") + 1));
-
-                    Map med = restTemplate.getForObject(
-                            backendUrl + "/procedures/" + medId, Map.class);
-
-                    rx.put("medicationName", med != null ? med.get("name") : medId);
-
-                    prescList.add(rx);
-
-                } catch (Exception ignored) {}
+            } catch (Exception e) {
+                model.addAttribute("apptList", new ArrayList<>());
             }
-
-            model.addAttribute("prescList", prescList);
 
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());

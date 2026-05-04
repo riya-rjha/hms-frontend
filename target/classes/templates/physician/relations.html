@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
 <meta charset="UTF-8">
 <title>HMS — Physician Relations</title>
@@ -8,33 +9,18 @@
 
 <style>
 body{background:#f8faff}
-.page-header{
-  background:linear-gradient(135deg,#0a1628,#1565c0);
-  color:white;
-  padding:24px 32px
-}
-.card{
-  border-radius:12px;
-  border:1px solid #e2e8f0;
-}
-.section-title{
-  font-size:14px;
-  font-weight:600;
-  color:#475569;
-  text-transform:uppercase;
-}
+.page-header{background:linear-gradient(135deg,#0a1628,#1565c0);color:white;padding:24px 32px}
+.card{border-radius:12px;border:1px solid #e2e8f0}
+.section-title{font-size:14px;font-weight:600;color:#475569;text-transform:uppercase}
 </style>
-
 </head>
 
 <body>
 
-<!-- NAVBAR -->
 <nav class="navbar navbar-dark px-4" style="background:#0a1628">
   <span class="navbar-brand fw-bold">🏥 HMS Portal</span>
 </nav>
 
-<!-- HEADER -->
 <div class="page-header">
   <small class="opacity-50">Home / Physician / Relations</small>
   <h4 class="mb-0 mt-1">Physician Relations</h4>
@@ -42,26 +28,23 @@ body{background:#f8faff}
 
 <div class="container-fluid px-4 py-4">
 
-  <!-- 🔽 SELECT PHYSICIAN -->
+  <!-- SELECT -->
   <div class="card p-3 mb-3">
     <form method="get">
       <label class="form-label">Select Physician</label>
       <select name="id" class="form-select w-auto" onchange="this.form.submit()">
-
         <option th:each="p : ${allItems}"
                 th:value="${p['employeeId']}"
                 th:text="${p['employeeId']} + ' — ' + ${p['name']}"
                 th:selected="${p['employeeId']} == ${selectedId}">
         </option>
-
       </select>
     </form>
   </div>
 
-  <!-- 🔷 PHYSICIAN DETAILS -->
+  <!-- DETAILS -->
   <div class="card p-3 mb-3" th:if="${selectedItem != null}">
     <h5 th:text="${selectedItem['name']}"></h5>
-
     <p class="text-muted mb-2" th:text="${selectedItem['position']}"></p>
 
     <div>
@@ -72,18 +55,16 @@ body{background:#f8faff}
 
   <div class="row g-3">
 
-    <!-- 👥 PATIENTS -->
+    <!-- PATIENTS -->
     <div class="col-md-6">
       <div class="card p-3">
         <div class="section-title mb-2">Patients Under This Physician</div>
 
         <div th:each="p : ${patList}" class="mb-3 border-bottom pb-2">
-
           <b>Name:</b> <span th:text="${p['name']}"></span><br>
           <b>SSN:</b> <span th:text="${p['ssn']}"></span><br>
           <b>Phone:</b> <span th:text="${p['phone']}"></span><br>
           <b>Address:</b> <span th:text="${p['address']}"></span>
-
         </div>
 
         <div th:if="${#lists.isEmpty(patList)}" class="text-muted">
@@ -92,23 +73,34 @@ body{background:#f8faff}
       </div>
     </div>
 
-    <!-- 💊 PRESCRIPTIONS -->
+    <!-- APPOINTMENTS -->
     <div class="col-md-6">
       <div class="card p-3">
-        <div class="section-title mb-2">Prescriptions</div>
+        <div class="section-title mb-2">Appointments</div>
 
-        <div th:each="rx : ${prescList}" class="mb-3 border-bottom pb-2">
+        <div th:each="a : ${apptList}" class="mb-3 border-bottom pb-2">
 
-          <b>Medication ID:</b> <span th:text="${rx['medication']}"></span><br>
-          <b>Patient SSN:</b> <span th:text="${rx['patient']}"></span><br>
-          <b>Dose:</b> <span th:text="${rx['dose']}"></span><br>
-          <b>Date:</b> <span th:text="${rx['date']}"></span>
+          <b>Appointment ID:</b>
+          <span th:text="${a['appointmentId']}"></span><br>
+
+          <b>Patient:</b>
+          <span th:text="${a['patientName'] != null ? a['patientName'] : '—'}"></span><br>
+
+          <b>Start:</b>
+          <span th:text="${a['starto']}"></span><br>
+
+          <b>End:</b>
+          <span th:text="${a['endo']}"></span><br>
+
+          <b>Room:</b>
+          <span th:text="${a['examinationRoom']}"></span>
 
         </div>
 
-        <div th:if="${#lists.isEmpty(prescList)}" class="text-muted">
-          No prescriptions found
+        <div th:if="${#lists.isEmpty(apptList)}" class="text-muted">
+          No appointments found
         </div>
+
       </div>
     </div>
 

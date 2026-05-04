@@ -90,26 +90,96 @@ public class AppointmentController {
     @GetMapping("/relations")
     public String relations(@RequestParam(defaultValue = "1") int id, Model model) {
         try {
+            // 🔹 All appointments
             ResponseEntity<Map> allRes = restTemplate.getForEntity(
                 backendUrl + "/appointments/search/findByOrderByStartoDesc?size=50", Map.class);
+
             Map allEmb = allRes.getBody() != null ? (Map) allRes.getBody().get("_embedded") : null;
-            model.addAttribute("allItems", allEmb != null ? (List<Map>) allEmb.get("appointments") : new ArrayList<>());
+            List<Map> all = allEmb != null ? (List<Map>) allEmb.get("appointments") : new ArrayList<>();
+
+            model.addAttribute("allItems", all);
             model.addAttribute("selectedId", id);
 
-            // Appointment detail
+            // 🔹 Selected appointment
+            Map selected = null;
             try {
-                model.addAttribute("selectedItem", restTemplate.getForEntity(backendUrl + "/appointments/" + id, Map.class).getBody());
-            } catch (Exception e) { model.addAttribute("selectedItem", null); }
+                selected = restTemplate.getForObject(
+                    backendUrl + "/appointments/" + id, Map.class);
+            } catch (Exception ignored) {}
 
-            // Prescriptions for this appointment
-            try {
-                ResponseEntity<Map> prescRes = restTemplate.getForEntity(
-                    backendUrl + "/prescriptions/search/findByAppointment_AppointmentId?id=" + id + "&size=20", Map.class);
-                Map prescEmb = prescRes.getBody() != null ? (Map) prescRes.getBody().get("_embedded") : null;
-                model.addAttribute("prescList", prescEmb != null ? (List<Map>) prescEmb.get("prescriptions") : new ArrayList<>());
-            } catch (Exception e) { model.addAttribute("prescList", new ArrayList<>()); }
+            model.addAttribute("selectedItem", selected);
 
-        } catch (Exception e) { model.addAttribute("error", e.getMessage()); }
+            // 🔥 FULL PRESCRIPTION RESOLUTION
+            ResponseEntity<Map> prescRes = restTemplate.getForEntity(
+                backendUrl + "/prescriptions?size=100", Map.class);
+
+            Map prescEmb = prescRes.getBody() != null ? (Map) prescRes.getBody().get("_embedded") : null;
+            List<Map> allPresc = prescEmb != null ? (List<Map>) prescEmb.get("prescriptions") : new ArrayList<>();
+
+            List<Map> prescList = new ArrayList<>();
+
+            for (Map rx : allPresc) {
+                try {
+                    Map links = (Map) rx.get("_links");
+
+                    // 🔹 Filter by appointment
+                    Map apptLink = (Map) links.get("appointment");
+                    if (apptLink == null) continue;
+
+                    String aHref = (String) ((Map) apptLink).get("href");
+                    int apptId = Integer.parseInt(aHref.substring(aHref.lastIndexOf("/") + 1));
+
+                    if (apptId != id) continue;
+
+                    // 🔹 Patient
+                    Map patLink = (Map) links.get("patient");
+                    if (patLink != null) {
+                        String pHref = (String) ((Map) patLink).get("href");
+                        int pId = Integer.parseInt(pHref.substring(pHref.lastIndexOf("/") + 1));
+
+                        Map p = restTemplate.getForObject(
+                            backendUrl + "/patients/" + pId, Map.class);
+
+                        rx.put("patientName", p != null ? p.get("name") : pId);
+                        rx.put("patientSsn", pId);
+                    }
+
+                    // 🔹 Physician
+                    Map phyLink = (Map) links.get("physician");
+                    if (phyLink != null) {
+                        String phHref = (String) ((Map) phyLink).get("href");
+                        int phId = Integer.parseInt(phHref.substring(phHref.lastIndexOf("/") + 1));
+
+                        Map phy = restTemplate.getForObject(
+                            backendUrl + "/physicians/" + phId, Map.class);
+
+                        rx.put("physicianName", phy != null ? phy.get("name") : phId);
+                        rx.put("physicianId", phId);
+                    }
+
+                    // 🔹 Medication
+                    Map medLink = (Map) links.get("medication");
+                    if (medLink != null) {
+                        String mHref = (String) ((Map) medLink).get("href");
+                        int mId = Integer.parseInt(mHref.substring(mHref.lastIndexOf("/") + 1));
+
+                        Map med = restTemplate.getForObject(
+                            backendUrl + "/procedures/" + mId, Map.class);
+
+                        rx.put("medicationName", med != null ? med.get("name") : mId);
+                    }
+
+                    prescList.add(rx);
+
+                } catch (Exception ignored) {}
+            }
+
+            model.addAttribute("prescList", prescList);
+
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+        }
+
         return "appointment/relations";
     }
 }
