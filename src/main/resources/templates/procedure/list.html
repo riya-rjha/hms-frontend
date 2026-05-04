@@ -1,17 +1,22 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8"><title>HMS — Procedures Module</title>
+<meta charset="UTF-8">
+<title>HMS — Procedure</title>
+
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
 <style>
 body{background:#f8faff}
-.page-header{background:linear-gradient(135deg,#083344,#164e63);color:white;padding:24px 32px}
+.page-header{background:linear-gradient(135deg,#0a1628,#1565c0);color:white;padding:24px 32px}
 .card{border-radius:12px;border:1px solid #e2e8f0}
 footer{background:#060e1c;color:rgba(255,255,255,.4);padding:12px;text-align:center;font-size:11px;margin-top:30px}
-.search-active{border:2px solid #0ea5e9 !important;background:#f0f9ff !important}
 </style>
 </head>
+
 <body>
+
+<!-- NAVBAR -->
 <nav class="navbar navbar-dark px-4" style="background:#0a1628">
   <span class="navbar-brand fw-bold">🏥 HMS Portal</span>
   <div>
@@ -21,158 +26,107 @@ footer{background:#060e1c;color:rgba(255,255,255,.4);padding:12px;text-align:cen
     <a class="btn btn-outline-light btn-sm me-1" href="/department/list">Department</a>
     <a class="btn btn-outline-light btn-sm me-1" href="/nurse/list">Nurse</a>
     <a class="btn btn-outline-light btn-sm me-1" href="/appointment/list">Appointment</a>
-    <a class="btn btn-outline-light btn-sm active" href="/procedure/list">Procedure</a>
+    <a class="btn btn-outline-light btn-sm me-1 active" href="/procedure/list">Procedure</a>
   </div>
 </nav>
 
+<!-- HEADER -->
 <div class="page-header">
   <small class="opacity-50">Home / Procedure</small>
-  <h4 class="mb-0 mt-1">Procedures Module</h4>
-  <small class="opacity-60">Member 6 · GET /api/procedures</small>
+  <h4 class="mb-0 mt-1">Procedure Module</h4>
 </div>
 
 <div class="container-fluid px-4 py-3">
-  <div th:if="${error}" class="alert alert-danger" th:text="'Backend Error: ' + ${error}"></div>
 
-  <div class="row g-3">
-    <div class="col-md-8">
+  <!-- ERROR -->
+  <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
 
-      <!-- Search Panel -->
-      <div class="card p-3 mb-3">
-        <h6 class="text-muted text-uppercase mb-2" style="font-size:11px">Search Procedures</h6>
-        <form action="/procedure/list" method="get" class="d-flex gap-2" id="nameSearchForm">
-          <input type="text" name="name" id="nameInput" class="form-control form-control-sm"
-                 placeholder="Search by procedure name (real-time)..."
-                 th:value="${searchName}"
-                 th:classappend="${searchName != null and !searchName.isEmpty()} ? 'search-active' : ''">
-          <button class="btn btn-sm" style="background:#0ea5e9;color:white">Search</button>
-          <a href="/procedure/list" class="btn btn-sm btn-secondary">Clear</a>
-        </form>
-        <div th:if="${searchName != null and !searchName.isEmpty()}" class="mt-2">
-          <span class="badge" style="background:#0ea5e9;color:white">Searching: "<span th:text="${searchName}"></span>"</span>
-          <span class="badge bg-secondary ms-1" th:text="${#lists.size(items)} + ' result(s)'"></span>
-        </div>
-      </div>
+  <div class="card p-3">
 
-      <!-- Table -->
-      <div class="card p-3">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <h6 class="text-muted text-uppercase mb-0" style="font-size:11px">Procedures List</h6>
-          <a href="/procedure/relations" class="btn btn-sm btn-outline-primary">View Relations →</a>
-        </div>
-        <table class="table table-sm table-hover">
-          <thead class="table-light">
-            <tr>
-              <th>Code</th>
-              <th>Name</th>
-              <th>Cost</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr th:each="p : ${items}">
-              <td style="font-family:monospace;font-size:12px;color:#64748b" th:text="${p.code}"></td>
-              <td>
-                <a th:href="@{/procedure/relations(id=${p.code})}"
-                   class="fw-semibold text-decoration-none" style="color:#164e63"
-                   th:text="${p.name}"></a>
-              </td>
-              <td>
-                <span style="font-family:monospace;color:#15803d;font-weight:600">
-                  $<span th:text="${#numbers.formatDecimal(p.cost, 1, 2)}"></span>
-                </span>
-              </td>
-              <td>
-                <button class="btn btn-sm btn-warning me-1"
-                  th:onclick="'fillEditForm(' + ${p.code} + ', \'' + ${p.name} + '\', ' + ${p.cost} + ')'">
-                  ✏️ Edit
-                </button>
-                <a th:href="@{/procedure/relations(id=${p.code})}" class="btn btn-sm btn-outline-info">Details</a>
-              </td>
-            </tr>
-            <tr th:if="${#lists.isEmpty(items)}">
-              <td colspan="4" class="text-center text-muted py-3">No records found</td>
-            </tr>
-          </tbody>
-        </table>
+    <table class="table table-sm table-hover">
 
-        <!-- Pagination -->
-        <nav th:if="${totalPages > 1 and searchName == null}">
-          <ul class="pagination pagination-sm">
-            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
-              <a class="page-link" th:href="@{/procedure/list(page=${currentPage-1},size=${size})}">Prev</a>
-            </li>
-            <li class="page-item" th:each="i : ${#numbers.sequence(0,totalPages-1)}"
-                th:classappend="${i == currentPage} ? 'active'">
-              <a class="page-link" th:href="@{/procedure/list(page=${i},size=${size})}" th:text="${i+1}"></a>
-            </li>
-            <li class="page-item" th:classappend="${currentPage == totalPages-1} ? 'disabled'">
-              <a class="page-link" th:href="@{/procedure/list(page=${currentPage+1},size=${size})}">Next</a>
-            </li>
-          </ul>
-        </nav>
-      </div>
-    </div>
+      <thead class="table-light">
+        <tr>
+          <th>Code</th>
+          <th>Name</th>
+          <th>Cost</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
 
-    <!-- Right: Add/Edit Form -->
-    <div class="col-md-4">
-      <div class="card p-3">
-        <h5 id="form-title">Add / Edit Procedure</h5>
-        <span class="badge mb-3" id="form-ep" style="background:#0ea5e9;color:white">POST /api/procedures</span>
-        <form action="/procedure/save" method="post" id="proc-form">
-          <div class="mb-2">
-            <label class="form-label" style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase">Code *</label>
-            <input type="number" name="code" id="f-code" class="form-control form-control-sm" placeholder="e.g. 1" required>
-          </div>
-          <div class="mb-2">
-            <label class="form-label" style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase">Name *</label>
-            <input type="text" name="name" id="f-name" class="form-control form-control-sm" placeholder="e.g. Reverse Rhinopodoplasty" required>
-          </div>
-          <div class="mb-2">
-            <label class="form-label" style="font-size:11px;font-weight:600;color:#64748b;text-transform:uppercase">Cost ($) *</label>
-            <input type="number" step="0.01" name="cost" id="f-cost" class="form-control form-control-sm" placeholder="e.g. 1500.00" required>
-          </div>
-          <div class="d-flex gap-2 mt-3">
-            <button type="submit" class="btn btn-sm" id="submit-btn" style="background:#0ea5e9;color:white">Save</button>
-            <button type="button" class="btn btn-sm btn-secondary" onclick="resetForm()">Clear</button>
-          </div>
-        </form>
-      </div>
-    </div>
+      <tbody>
+
+        <!-- DATA -->
+        <tr th:each="p : ${items}">
+
+          <!-- CODE -->
+          <td th:text="${p['code'] != null ? p['code'] : '—'}"></td>
+
+          <!-- NAME -->
+          <td>
+            <a th:href="@{/procedure/relations(id=${p['code']})}"
+               th:text="${p['name']}"></a>
+          </td>
+
+          <!-- COST -->
+          <td th:text="${p['cost'] != null ? p['cost'] : '—'}"></td>
+
+          <!-- ACTIONS -->
+          <td>
+
+            <!-- EDIT -->
+            <button class="btn btn-sm btn-warning me-1"
+              th:attr="data-code=${p['code']},
+                       data-name=${p['name']},
+                       data-cost=${p['cost']}"
+              onclick="handleEdit(this)">
+              ✏️ Edit
+            </button>
+
+            <!-- DETAILS -->
+            <a th:href="@{/procedure/relations(id=${p['code']})}"
+               class="btn btn-sm btn-outline-info">
+              Details
+            </a>
+
+          </td>
+
+        </tr>
+
+        <!-- EMPTY STATE -->
+        <tr th:if="${#lists.isEmpty(items)}">
+          <td colspan="4" class="text-center text-muted py-3">
+            No procedures found
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+
   </div>
+
 </div>
 
-<footer>HMS — Procedures Module | Member 6 | Backend: localhost:8082 | 2026</footer>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-let searchTimer;
-document.getElementById('nameInput').addEventListener('input', function() {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
-    document.getElementById('nameSearchForm').submit();
-  }, 400);
-});
+<footer>HMS — Procedure Module | Backend: localhost:8082</footer>
 
+<script>
+// SAFE HANDLER
+function handleEdit(btn) {
+  const code = btn.getAttribute("data-code");
+  const name = btn.getAttribute("data-name");
+  const cost = btn.getAttribute("data-cost");
+
+  fillEditForm(code, name, cost);
+}
+
+// EXISTING FUNCTION
 function fillEditForm(code, name, cost) {
   document.getElementById('f-code').value = code;
   document.getElementById('f-code').readOnly = true;
   document.getElementById('f-name').value = name;
   document.getElementById('f-cost').value = cost;
-  document.getElementById('form-title').textContent = 'Edit Procedure #' + code;
-  document.getElementById('form-ep').textContent = 'PUT /api/procedures/' + code;
-  document.getElementById('submit-btn').textContent = 'Update';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function resetForm() {
-  document.getElementById('f-code').value = '';
-  document.getElementById('f-code').readOnly = false;
-  document.getElementById('f-name').value = '';
-  document.getElementById('f-cost').value = '';
-  document.getElementById('form-title').textContent = 'Add / Edit Procedure';
-  document.getElementById('form-ep').textContent = 'POST /api/procedures';
-  document.getElementById('submit-btn').textContent = 'Save';
 }
 </script>
+
 </body>
 </html>

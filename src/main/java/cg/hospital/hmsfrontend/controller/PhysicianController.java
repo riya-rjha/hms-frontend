@@ -97,9 +97,19 @@ public class PhysicianController {
             Map patEmb = patRes.getBody() != null ? (Map) patRes.getBody().get("_embedded") : null;
             List<Map> patList = patEmb != null ? (List<Map>) patEmb.get("patients") : new ArrayList<>();
 
+            // ✅ SSN FIX ADDED HERE
+            for (Map p : patList) {
+                if (p.get("ssn") == null) {
+                    try {
+                        String href = (String) ((Map)((Map) p.get("_links")).get("self")).get("href");
+                        p.put("ssn", Integer.parseInt(href.substring(href.lastIndexOf("/") + 1)));
+                    } catch (Exception ignored) {}
+                }
+            }
+
             model.addAttribute("patList", patList);
 
-            // ✅ FIXED: Use search endpoint directly (NO manual filtering)
+            // ✅ APPOINTMENTS (correct endpoint)
             try {
                 ResponseEntity<Map> apptRes = restTemplate.getForEntity(
                         backendUrl + "/appointments/search/findByPhysicianEntityEmployeeId?physician=" + id + "&size=20",

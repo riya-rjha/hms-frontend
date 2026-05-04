@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
 <meta charset="UTF-8">
 <title>HMS — Patient Relations</title>
@@ -8,30 +9,26 @@
 
 <style>
 body{background:#f8faff}
-.page-header{
-  background:linear-gradient(135deg,#064e3b,#065f46);
-  color:white;
-  padding:24px 32px
-}
-.card{
-  border-radius:12px;
-  border:1px solid #e2e8f0;
-}
-.section-title{
-  font-size:14px;
-  font-weight:600;
-  color:#475569;
-  text-transform:uppercase;
-}
+.page-header{background:linear-gradient(135deg,#0a1628,#1565c0);color:white;padding:24px 32px}
+.card{border-radius:12px;border:1px solid #e2e8f0}
+.section-title{font-size:14px;font-weight:600;color:#475569;text-transform:uppercase}
 </style>
-
 </head>
 
 <body>
 
-<!-- NAVBAR -->
+<!-- NAVBAR (same as physician) -->
 <nav class="navbar navbar-dark px-4" style="background:#0a1628">
   <span class="navbar-brand fw-bold">🏥 HMS Portal</span>
+  <div>
+    <a class="btn btn-outline-light btn-sm me-1" href="/">Home</a>
+    <a class="btn btn-outline-light btn-sm me-1" href="/physician/list">Physician</a>
+    <a class="btn btn-outline-light btn-sm me-1 active" href="/patient/list">Patient</a>
+    <a class="btn btn-outline-light btn-sm me-1" href="/department/list">Department</a>
+    <a class="btn btn-outline-light btn-sm me-1" href="/nurse/list">Nurse</a>
+    <a class="btn btn-outline-light btn-sm me-1" href="/appointment/list">Appointment</a>
+    <a class="btn btn-outline-light btn-sm" href="/procedure/list">Procedure</a>
+  </div>
 </nav>
 
 <!-- HEADER -->
@@ -42,7 +39,7 @@ body{background:#f8faff}
 
 <div class="container-fluid px-4 py-4">
 
-  <!-- 🔽 SELECT PATIENT -->
+  <!-- SELECT PATIENT -->
   <div class="card p-3 mb-3">
     <form method="get">
       <label class="form-label">Select Patient</label>
@@ -58,7 +55,7 @@ body{background:#f8faff}
     </form>
   </div>
 
-  <!-- 🔷 PATIENT DETAILS -->
+  <!-- PATIENT DETAILS -->
   <div class="card p-3 mb-3" th:if="${selectedItem != null}">
     <h5 th:text="${selectedItem['name']}"></h5>
 
@@ -75,17 +72,24 @@ body{background:#f8faff}
 
   <div class="row g-3">
 
-    <!-- 📅 APPOINTMENTS -->
+    <!-- APPOINTMENTS -->
     <div class="col-md-6">
       <div class="card p-3">
         <div class="section-title mb-2">Appointments</div>
 
         <div th:each="a : ${apptList}" class="mb-3 border-bottom pb-2">
 
-          <b>Appointment ID:</b> <span th:text="${a['appointmentId']}"></span><br>
-          <b>Room:</b> <span th:text="${a['examinationRoom']}"></span><br>
-          <b>Start:</b> <span th:text="${a['starto']}"></span><br>
-          <b>End:</b> <span th:text="${a['endo']}"></span>
+          <b>Appointment ID:</b>
+          <span th:text="${a['appointmentId']}"></span><br>
+
+          <b>Room:</b>
+          <span th:text="${a['examinationRoom']}"></span><br>
+
+          <b>Start:</b>
+          <span th:text="${a['starto']}"></span><br>
+
+          <b>End:</b>
+          <span th:text="${a['endo']}"></span>
 
         </div>
 
@@ -95,16 +99,21 @@ body{background:#f8faff}
       </div>
     </div>
 
-    <!-- 💊 PRESCRIPTIONS -->
+    <!-- PRESCRIPTIONS -->
     <div class="col-md-6">
       <div class="card p-3">
         <div class="section-title mb-2">Prescriptions</div>
 
         <div th:each="rx : ${prescList}" class="mb-3 border-bottom pb-2">
 
-          <b>Medication ID:</b> <span th:text="${rx['medication']}"></span><br>
-          <b>Dose:</b> <span th:text="${rx['dose']}"></span><br>
-          <b>Date:</b> <span th:text="${rx['date']}"></span>
+          <b>Medication ID:</b>
+          <span th:text="${rx['medicationId']}"></span><br>
+
+          <b>Dose:</b>
+          <span th:text="${rx['dose']}"></span><br>
+
+          <b>Date:</b>
+          <span th:text="${rx['date']}"></span>
 
         </div>
 
