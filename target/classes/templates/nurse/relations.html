@@ -49,7 +49,6 @@ footer{background:#060e1c;color:rgba(255,255,255,.4);padding:12px;text-align:cen
   <!-- DETAILS -->
   <div class="card p-3 mb-3" th:if="${selectedItem != null}">
     <h5 th:text="${selectedItem['name']}"></h5>
-
     <div>
       <b>ID:</b> <span th:text="${selectedItem['employeeId']}"></span><br>
       <b>SSN:</b> <span th:text="${selectedItem['ssn']}"></span><br>
@@ -62,13 +61,12 @@ footer{background:#060e1c;color:rgba(255,255,255,.4);padding:12px;text-align:cen
   <div class="row g-3">
 
     <!-- ON CALL -->
-    <div class="col-md-4">
+    <div class="col-md-6">
       <div class="rel-card bg-white">
         <div class="rel-header">
           <span>On-Call</span>
           <span th:text="${#lists.size(onCallList)}"></span>
         </div>
-
         <div class="rel-body">
           <div th:each="oc : ${onCallList}" class="item-row">
             <div class="item-av bg-primary">OC</div>
@@ -79,20 +77,18 @@ footer{background:#060e1c;color:rgba(255,255,255,.4);padding:12px;text-align:cen
               End: <span th:text="${oc['onCallEnd']}"></span>
             </div>
           </div>
-
           <div th:if="${#lists.isEmpty(onCallList)}">No data</div>
         </div>
       </div>
     </div>
 
     <!-- UNDERGOES -->
-    <div class="col-md-4">
+    <div class="col-md-6">
       <div class="rel-card bg-white">
         <div class="rel-header">
           <span>Undergoes</span>
           <span th:text="${#lists.size(undergoesList)}"></span>
         </div>
-
         <div class="rel-body">
           <div th:each="u : ${undergoesList}" class="item-row">
             <div class="item-av bg-success">UG</div>
@@ -103,33 +99,7 @@ footer{background:#060e1c;color:rgba(255,255,255,.4);padding:12px;text-align:cen
               Date: <span th:text="${u['dateUndergoes']}"></span>
             </div>
           </div>
-
           <div th:if="${#lists.isEmpty(undergoesList)}">No data</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- APPOINTMENTS -->
-    <div class="col-md-4">
-      <div class="rel-card bg-white">
-        <div class="rel-header">
-          <span>Appointments</span>
-          <span th:text="${#lists.size(apptList)}"></span>
-        </div>
-
-        <div class="rel-body">
-          <div th:each="a : ${apptList}" class="item-row">
-            <div class="item-av bg-warning">AP</div>
-            <div>
-              ID: <span th:text="${a['appointmentId']}"></span><br>
-              Patient: <span th:text="${a['patientName']}"></span><br>
-              Physician: <span th:text="${a['physicianName']}"></span><br>
-              Start: <span th:text="${a['starto']}"></span><br>
-              Room: <span th:text="${a['examinationRoom']}"></span>
-            </div>
-          </div>
-
-          <div th:if="${#lists.isEmpty(apptList)}">No data</div>
         </div>
       </div>
     </div>

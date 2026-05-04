@@ -20,6 +20,20 @@ public class NurseController {
     @Value("${backend.base.url}")
     private String backendUrl;
 
+    // ===================== EXTRACT ID =====================
+    private void enrichNurseIds(List<Map> list) {
+        for (Map n : list) {
+            if (n.get("employeeId") == null) {
+                try {
+                    String href = (String) ((Map)((Map) n.get("_links")).get("self")).get("href");
+                    href = href.replaceAll("\\{.*\\}", "");
+                    int id = Integer.parseInt(href.substring(href.lastIndexOf("/") + 1));
+                    n.put("employeeId", id);
+                } catch (Exception ignored) {}
+            }
+        }
+    }
+
     // ===================== LIST =====================
     @GetMapping("/list")
     public String list(Model model) {
@@ -29,6 +43,8 @@ public class NurseController {
 
             Map emb = res.getBody() != null ? (Map) res.getBody().get("_embedded") : null;
             List<Map> list = emb != null ? (List<Map>) emb.get("nurses") : new ArrayList<>();
+
+            enrichNurseIds(list);
 
             model.addAttribute("items", list);
 
@@ -42,7 +58,7 @@ public class NurseController {
 
     // ===================== RELATIONS =====================
     @GetMapping("/relations")
-    public String relations(@RequestParam(defaultValue = "101") int id, Model model) {
+    public String relations(@RequestParam int id, Model model) {
 
         try {
             // 🔹 ALL NURSES
@@ -52,17 +68,61 @@ public class NurseController {
             Map allEmb = allRes.getBody() != null ? (Map) allRes.getBody().get("_embedded") : null;
             List<Map> all = allEmb != null ? (List<Map>) allEmb.get("nurses") : new ArrayList<>();
 
+            enrichNurseIds(all);
+
             model.addAttribute("allItems", all);
             model.addAttribute("selectedId", id);
 
-            // 🔹 SELECTED NURSE
+            // 🔹 SELECTED
             Map nurse = restTemplate.getForObject(
                     backendUrl + "/nurse/" + id, Map.class);
 
             model.addAttribute("selectedItem", nurse);
 
             // =====================================================
-            // 🔥 ON_CALL (FETCH ALL + FILTER)
+            // 🔥 UNDERGOES — use search endpoint + direct fields
+            // =====================================================
+            List<Map> undergoesList = new ArrayList<>();
+
+            try {
+                ResponseEntity<Map> ugRes = restTemplate.getForEntity(
+                        backendUrl + "/undergoes/search/findByAssistingNurse_EmployeeId?employeeId=" + id + "&size=100",
+                        Map.class);
+
+                Map ugEmb = ugRes.getBody() != null ? (Map) ugRes.getBody().get("_embedded") : null;
+                List<Map> allUg = ugEmb != null ? (List<Map>) ugEmb.get("undergoes") : new ArrayList<>();
+
+                for (Map u : allUg) {
+                    try {
+                        // 🔹 Patient name — use direct patientId field
+                        Number patientId = (Number) u.get("patientId");
+                        if (patientId != null) {
+                            Map pat = restTemplate.getForObject(
+                                    backendUrl + "/patients/" + patientId, Map.class);
+                            u.put("patientName", pat != null ? pat.get("name") : patientId);
+                        }
+                    } catch (Exception ignored) {}
+
+                    try {
+                        // 🔹 Physician name — use direct physicianId field
+                        Number phyId = (Number) u.get("physicianId");
+                        if (phyId != null) {
+                            Map phy = restTemplate.getForObject(
+                                    backendUrl + "/physicians/" + phyId, Map.class);
+                            u.put("physicianName", phy != null ? phy.get("name") : phyId);
+                        }
+                    } catch (Exception ignored) {}
+
+                    undergoesList.add(u);
+                }
+
+            } catch (Exception ignored) {}
+
+            model.addAttribute("undergoesList", undergoesList);
+
+            // =====================================================
+            // 🔥 ON CALL — parse nurse ID from composite self href
+            // Format: {blockFloor}_{nurseId}_{blockCode}_{start}_{end}
             // =====================================================
             List<Map> onCallList = new ArrayList<>();
 
@@ -75,12 +135,13 @@ public class NurseController {
 
                 for (Map oc : allOc) {
                     try {
-                        String href = (String) ((Map)((Map) oc.get("_links")).get("nurse")).get("href");
-
-                        // remove {?projection}
+                        String href = (String) ((Map)((Map) oc.get("_links")).get("self")).get("href");
                         href = href.replaceAll("\\{.*\\}", "");
+                        String key = href.substring(href.lastIndexOf("/") + 1);
 
-                        int nurseId = Integer.parseInt(href.substring(href.lastIndexOf("/") + 1));
+                        // composite key: blockFloor_nurseId_blockCode_...
+                        String[] parts = key.split("_");
+                        int nurseId = Integer.parseInt(parts[1]);
 
                         if (nurseId == id) {
                             onCallList.add(oc);
@@ -92,108 +153,6 @@ public class NurseController {
             } catch (Exception ignored) {}
 
             model.addAttribute("onCallList", onCallList);
-
-            // =====================================================
-            // 🔥 UNDERGOES (FETCH ALL + FILTER + ENRICH)
-            // =====================================================
-            List<Map> undergoesList = new ArrayList<>();
-
-            try {
-                ResponseEntity<Map> ugRes = restTemplate.getForEntity(
-                        backendUrl + "/undergoes?size=100", Map.class);
-
-                Map ugEmb = ugRes.getBody() != null ? (Map) ugRes.getBody().get("_embedded") : null;
-                List<Map> allUg = ugEmb != null ? (List<Map>) ugEmb.get("undergoes") : new ArrayList<>();
-
-                for (Map u : allUg) {
-                    try {
-                        String href = (String) ((Map)((Map) u.get("_links")).get("assistingNurse")).get("href");
-                        href = href.replaceAll("\\{.*\\}", "");
-
-                        int nurseId = Integer.parseInt(href.substring(href.lastIndexOf("/") + 1));
-
-                        if (nurseId == id) {
-
-                            // 🔹 PATIENT NAME
-                            try {
-                                String pHref = (String) ((Map)((Map) u.get("_links")).get("patient")).get("href");
-                                pHref = pHref.replaceAll("\\{.*\\}", "");
-
-                                Map pat = restTemplate.getForObject(pHref, Map.class);
-                                u.put("patientName", pat != null ? pat.get("name") : null);
-
-                            } catch (Exception ignored) {}
-
-                            // 🔹 PHYSICIAN NAME
-                            try {
-                                String phHref = (String) ((Map)((Map) u.get("_links")).get("physician")).get("href");
-                                phHref = phHref.replaceAll("\\{.*\\}", "");
-
-                                Map phy = restTemplate.getForObject(phHref, Map.class);
-                                u.put("physicianName", phy != null ? phy.get("name") : null);
-
-                            } catch (Exception ignored) {}
-
-                            undergoesList.add(u);
-                        }
-
-                    } catch (Exception ignored) {}
-                }
-
-            } catch (Exception ignored) {}
-
-            model.addAttribute("undergoesList", undergoesList);
-
-            // =====================================================
-            // 🔥 APPOINTMENTS (FETCH ALL + FILTER + ENRICH)
-            // =====================================================
-            List<Map> apptList = new ArrayList<>();
-
-            try {
-                ResponseEntity<Map> apptRes = restTemplate.getForEntity(
-                        backendUrl + "/appointments?size=100", Map.class);
-
-                Map apptEmb = apptRes.getBody() != null ? (Map) apptRes.getBody().get("_embedded") : null;
-                List<Map> allAppt = apptEmb != null ? (List<Map>) apptEmb.get("appointments") : new ArrayList<>();
-
-                for (Map a : allAppt) {
-                    try {
-                        String href = (String) ((Map)((Map) a.get("_links")).get("prepNurse")).get("href");
-                        href = href.replaceAll("\\{.*\\}", "");
-
-                        int nurseId = Integer.parseInt(href.substring(href.lastIndexOf("/") + 1));
-
-                        if (nurseId == id) {
-
-                            // 🔹 PATIENT NAME
-                            try {
-                                String pHref = (String) ((Map)((Map) a.get("_links")).get("patient")).get("href");
-                                pHref = pHref.replaceAll("\\{.*\\}", "");
-
-                                Map pat = restTemplate.getForObject(pHref, Map.class);
-                                a.put("patientName", pat != null ? pat.get("name") : null);
-
-                            } catch (Exception ignored) {}
-
-                            // 🔹 PHYSICIAN NAME
-                            try {
-                                String phHref = (String) ((Map)((Map) a.get("_links")).get("physician")).get("href");
-                                phHref = phHref.replaceAll("\\{.*\\}", "");
-
-                                Map phy = restTemplate.getForObject(phHref, Map.class);
-                                a.put("physicianName", phy != null ? phy.get("name") : null);
-
-                            } catch (Exception ignored) {}
-
-                            apptList.add(a);
-                        }
-
-                    } catch (Exception ignored) {}
-                }
-
-            } catch (Exception ignored) {}
-
-            model.addAttribute("apptList", apptList);
 
         } catch (Exception e) {
             model.addAttribute("error", e.getMessage());
