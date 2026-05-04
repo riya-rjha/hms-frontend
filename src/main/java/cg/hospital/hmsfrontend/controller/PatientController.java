@@ -7,6 +7,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+
 import java.util.*;
 
 @Controller
@@ -14,9 +15,11 @@ import java.util.*;
 public class PatientController {
 
     @Autowired private RestTemplate restTemplate;
-    @Value("${backend.base.url}") private String backendUrl;
 
-    // 🔥 COMMON METHOD (IMPORTANT)
+    @Value("${backend.base.url}")
+    private String backendUrl;
+
+    // 🔥 Extract PCP info (works for both object + _links)
     private void enrichPCP(List<Map> list) {
         for (Map p : list) {
             try {
@@ -48,65 +51,103 @@ public class PatientController {
         }
     }
 
+    // ===================== LIST =====================
     @GetMapping("/list")
     public String list(Model model) {
-        ResponseEntity<Map> res = restTemplate.getForEntity(
-                backendUrl + "/patients?size=100", Map.class);
+        try {
+            ResponseEntity<Map> res = restTemplate.getForEntity(
+                    backendUrl + "/patients?size=100", Map.class);
 
-        Map emb = (Map) res.getBody().get("_embedded");
-        List<Map> list = (List<Map>) emb.get("patients");
+            Map emb = res.getBody() != null ? (Map) res.getBody().get("_embedded") : null;
+            List<Map> list = emb != null ? (List<Map>) emb.get("patients") : new ArrayList<>();
 
-        enrichPCP(list);
+            enrichPCP(list);
 
-        model.addAttribute("items", list);
+            model.addAttribute("items", list);
+
+        } catch (Exception e) {
+            model.addAttribute("items", new ArrayList<>());
+            model.addAttribute("error", e.getMessage());
+        }
+
         return "patient/list";
     }
 
+    // ===================== RELATIONS =====================
     @GetMapping("/relations")
     public String relations(@RequestParam int id, Model model) {
 
-        // all patients
-        ResponseEntity<Map> allRes = restTemplate.getForEntity(
-                backendUrl + "/patients?size=100", Map.class);
-
-        List<Map> all = (List<Map>) ((Map) allRes.getBody().get("_embedded")).get("patients");
-        enrichPCP(all);
-
-        model.addAttribute("allItems", all);
-        model.addAttribute("selectedId", id);
-
-        // selected patient
-        Map pat = restTemplate.getForObject(
-                backendUrl + "/patients/" + id, Map.class);
-
-        List<Map> single = new ArrayList<>();
-        single.add(pat);
-        enrichPCP(single);
-
-        model.addAttribute("selectedItem", pat);
-
-        // appointments
         try {
-            Map appt = restTemplate.getForObject(
-                    backendUrl + "/appointments/search/findByPatientEntitySsn?patient=" + id,
-                    Map.class);
+            // 🔹 All patients
+            ResponseEntity<Map> allRes = restTemplate.getForEntity(
+                    backendUrl + "/patients?size=100", Map.class);
 
-            model.addAttribute("apptList",
-                    appt != null ? ((Map) appt.get("_embedded")).get("appointments") : new ArrayList<>());
+            Map allEmb = allRes.getBody() != null ? (Map) allRes.getBody().get("_embedded") : null;
+            List<Map> all = allEmb != null ? (List<Map>) allEmb.get("patients") : new ArrayList<>();
+
+            enrichPCP(all);
+
+            model.addAttribute("allItems", all);
+            model.addAttribute("selectedId", id);
+
+            // 🔹 Selected patient
+            Map pat = restTemplate.getForObject(
+                    backendUrl + "/patients/" + id, Map.class);
+
+            List<Map> single = new ArrayList<>();
+            if (pat != null) single.add(pat);
+
+            enrichPCP(single);
+
+            model.addAttribute("selectedItem", pat);
+
+            // 🔥 APPOINTMENTS (safe fallback)
+            try {
+                ResponseEntity<Map> apptRes = restTemplate.getForEntity(
+                        backendUrl + "/appointments", Map.class);
+
+                Map apptEmb = apptRes.getBody() != null ? (Map) apptRes.getBody().get("_embedded") : null;
+                List<Map> allAppts = apptEmb != null ? (List<Map>) apptEmb.get("appointments") : new ArrayList<>();
+
+                List<Map> apptList = new ArrayList<>();
+
+                for (Map a : allAppts) {
+                    try {
+                        Number patientId = (Number) a.get("patient");
+                        if (patientId != null && patientId.intValue() == id) {
+                            apptList.add(a);
+                        }
+                    } catch (Exception ignored) {}
+                }
+
+                model.addAttribute("apptList", apptList);
+
+            } catch (Exception e) {
+                model.addAttribute("apptList", new ArrayList<>());
+            }
+
+            // 🔥 PRESCRIPTIONS (FIXED)
+            ResponseEntity<Map> prescRes = restTemplate.getForEntity(
+                    backendUrl + "/prescribes", Map.class);
+
+            Map prescEmb = prescRes.getBody() != null ? (Map) prescRes.getBody().get("_embedded") : null;
+            List<Map> allPresc = prescEmb != null ? (List<Map>) prescEmb.get("prescribes") : new ArrayList<>();
+
+            List<Map> prescList = new ArrayList<>();
+
+            for (Map rx : allPresc) {
+                try {
+                    Number patientId = (Number) rx.get("patient");
+                    if (patientId != null && patientId.intValue() == id) {
+                        prescList.add(rx);
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            model.addAttribute("prescList", prescList);
+
         } catch (Exception e) {
-            model.addAttribute("apptList", new ArrayList<>());
-        }
-
-        // prescriptions
-        try {
-            Map presc = restTemplate.getForObject(
-                    backendUrl + "/prescriptions/search/findByIdPatient?patient=" + id,
-                    Map.class);
-
-            model.addAttribute("prescList",
-                    presc != null ? ((Map) presc.get("_embedded")).get("prescriptions") : new ArrayList<>());
-        } catch (Exception e) {
-            model.addAttribute("prescList", new ArrayList<>());
+            model.addAttribute("error", e.getMessage());
         }
 
         return "patient/relations";
