@@ -29,14 +29,37 @@ public class PatientController {
             Map emb = res.getBody() != null ? (Map) res.getBody().get("_embedded") : null;
             List<Map> list = emb != null ? (List<Map>) emb.get("patients") : new ArrayList<>();
 
-            // ✅ SSN FIX
             for (Map p : list) {
+
+                // ✅ SSN FIX
                 if (p.get("ssn") == null) {
                     try {
                         String href = (String) ((Map)((Map) p.get("_links")).get("self")).get("href");
                         href = href.replaceAll("\\{.*\\}", "").trim();
                         p.put("ssn", Integer.parseInt(href.substring(href.lastIndexOf("/") + 1)));
                     } catch (Exception ignored) {}
+                }
+
+                // 🔥 PCP FIX (IMPORTANT)
+                try {
+                    String selfHref = (String) ((Map)((Map) p.get("_links")).get("self")).get("href");
+                    selfHref = selfHref.replaceAll("\\{.*\\}", "").trim();
+
+                    Map pcp = restTemplate.getForObject(selfHref + "/pcp", Map.class);
+
+                    if (pcp != null) {
+                        p.put("pcpName", pcp.get("name"));
+
+                        String href = (String) ((Map)((Map) pcp.get("_links")).get("self")).get("href");
+                        href = href.replaceAll("\\{.*\\}", "").trim();
+                        int phyId = Integer.parseInt(href.substring(href.lastIndexOf("/") + 1));
+
+                        p.put("pcpId", phyId);
+                    }
+
+                } catch (Exception ignored) {
+                    p.put("pcpName", "—");
+                    p.put("pcpId", "—");
                 }
             }
 

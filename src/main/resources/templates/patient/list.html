@@ -16,7 +16,6 @@ footer{background:#060e1c;color:rgba(255,255,255,.4);padding:12px;text-align:cen
 
 <body>
 
-<!-- NAVBAR (same as physician) -->
 <nav class="navbar navbar-dark px-4" style="background:#0a1628">
   <span class="navbar-brand fw-bold">🏥 HMS Portal</span>
   <div>
@@ -30,7 +29,6 @@ footer{background:#060e1c;color:rgba(255,255,255,.4);padding:12px;text-align:cen
   </div>
 </nav>
 
-<!-- HEADER -->
 <div class="page-header">
   <small class="opacity-50">Home / Patient</small>
   <h4 class="mb-0 mt-1">Patient Module</h4>
@@ -72,32 +70,21 @@ footer{background:#060e1c;color:rgba(255,255,255,.4);padding:12px;text-align:cen
 
           <td th:text="${p['insuranceId']}"></td>
 
+          <!-- ✅ FIXED PCP COLUMN -->
           <td>
-            <span th:text="${p['pcpName']}"></span>
+            <span th:text="${p['pcpName'] != null ? p['pcpName'] : 'Not Assigned'}"></span>
             <br>
-            <small class="text-muted">(ID: <span th:text="${p['pcpId']}"></span>)</small>
+            <small class="text-muted">
+              (ID:
+              <span th:text="${p['pcpId'] != null ? p['pcpId'] : '-'}"></span>)
+            </small>
           </td>
 
           <td>
-
-            <!-- EDIT BUTTON -->
-            <button class="btn btn-sm btn-warning me-1"
-              th:attr="data-ssn=${p['ssn']},
-                       data-name=${p['name']},
-                       data-address=${p['address']},
-                       data-phone=${p['phone']},
-                       data-insurance=${p['insuranceId']},
-                       data-pcp=${p['pcpId']}"
-              onclick="handleEdit(this)">
-              ✏️ Edit
-            </button>
-
-            <!-- DETAILS BUTTON -->
             <a th:href="@{/patient/relations(id=${p['ssn']})}"
                class="btn btn-sm btn-outline-info">
               Details
             </a>
-
           </td>
 
         </tr>
@@ -115,19 +102,6 @@ footer{background:#060e1c;color:rgba(255,255,255,.4);padding:12px;text-align:cen
 </div>
 
 <footer>HMS — Patient Module | Backend: localhost:8082</footer>
-
-<script>
-function handleEdit(btn) {
-  const ssn = btn.getAttribute("data-ssn");
-  const name = btn.getAttribute("data-name");
-  const address = btn.getAttribute("data-address");
-  const phone = btn.getAttribute("data-phone");
-  const insurance = btn.getAttribute("data-insurance");
-  const pcp = btn.getAttribute("data-pcp");
-
-  fillEditForm(ssn, name, address, phone, insurance, pcp);
-}
-</script>
 
 </body>
 </html>

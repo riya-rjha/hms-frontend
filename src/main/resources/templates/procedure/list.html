@@ -75,13 +75,13 @@ footer{background:#060e1c;color:rgba(255,255,255,.4);padding:12px;text-align:cen
           <td>
 
             <!-- EDIT -->
-            <button class="btn btn-sm btn-warning me-1"
-              th:attr="data-code=${p['code']},
-                       data-name=${p['name']},
-                       data-cost=${p['cost']}"
-              onclick="handleEdit(this)">
-              ✏️ Edit
-            </button>
+<!--            <button class="btn btn-sm btn-warning me-1"-->
+<!--              th:attr="data-code=${p['code']},-->
+<!--                       data-name=${p['name']},-->
+<!--                       data-cost=${p['cost']}"-->
+<!--              onclick="handleEdit(this)">-->
+<!--              ✏️ Edit-->
+<!--            </button>-->
 
             <!-- DETAILS -->
             <a th:href="@{/procedure/relations(id=${p['code']})}"

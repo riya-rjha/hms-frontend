@@ -72,14 +72,7 @@ footer{background:#060e1c;color:rgba(255,255,255,.4);padding:12px;text-align:cen
 
           <td>
             <!-- ✅ FIXED BUTTON -->
-            <button class="btn btn-sm btn-warning me-1"
-              th:attr="data-id=${p['employeeId']},
-                       data-name=${p['name']},
-                       data-position=${p['position']},
-                       data-ssn=${p['ssn']}"
-              onclick="handleEdit(this)">
-              ✏️ Edit
-            </button>
+         
 
             <a th:href="@{/physician/relations(id=${p['employeeId']})}"
                class="btn btn-sm btn-outline-info">

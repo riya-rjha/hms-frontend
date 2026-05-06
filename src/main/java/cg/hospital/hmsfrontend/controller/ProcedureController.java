@@ -58,7 +58,7 @@ public class ProcedureController {
                 totalPages = pageInfo != null ? ((Number) pageInfo.get("totalPages")).intValue() : 1;
             }
 
-            // ✅ TRAINER FIX: extract code from _links
+            // ✅ Extract code from _links
             for (Map p : list) {
                 if (p.get("code") == null) {
                     try {
@@ -123,7 +123,7 @@ public class ProcedureController {
             Map allEmb = allRes.getBody() != null ? (Map) allRes.getBody().get("_embedded") : null;
             List<Map> allList = allEmb != null ? (List<Map>) allEmb.get("procedures") : new ArrayList<>();
 
-            // extract code for dropdown
+            // ✅ Extract code for dropdown
             for (Map p : allList) {
                 if (p.get("code") == null) {
                     try {
@@ -138,13 +138,33 @@ public class ProcedureController {
             model.addAttribute("allItems", allList);
             model.addAttribute("selectedId", id);
 
-            // 🔹 Selected procedure
+            // 🔥 FIXED: Selected procedure with code extraction
+            Map proc = null;
+
             try {
-                model.addAttribute("selectedItem",
-                        restTemplate.getForEntity(backendUrl + "/procedures/" + id, Map.class).getBody());
+                proc = restTemplate.getForObject(
+                        backendUrl + "/procedures/" + id, Map.class);
+
+                if (proc != null) {
+
+                    if (proc.get("code") == null) {
+                        try {
+                            String href = (String) ((Map)((Map) proc.get("_links")).get("self")).get("href");
+                            href = href.replaceAll("\\{.*\\}", "").trim();
+                            int code = Integer.parseInt(href.substring(href.lastIndexOf("/") + 1));
+                            proc.put("code", code);
+                        } catch (Exception ignored) {}
+                    }
+
+                    if (proc.get("name") == null) proc.put("name", "—");
+                    if (proc.get("cost") == null) proc.put("cost", "—");
+                }
+
             } catch (Exception e) {
-                model.addAttribute("selectedItem", null);
+                proc = null;
             }
+
+            model.addAttribute("selectedItem", proc);
 
             // 🔹 TRAINED-IN
             try {
@@ -189,7 +209,6 @@ public class ProcedureController {
 
                 for (Map u : undergoesList) {
                     try {
-                        // physician name
                         Integer phyId = (Integer) u.get("physicianId");
                         if (phyId != null) {
                             Map phy = restTemplate.getForObject(
@@ -197,7 +216,6 @@ public class ProcedureController {
                             if (phy != null) u.put("physicianName", phy.get("name"));
                         }
 
-                        // patient name
                         Integer patId = (Integer) u.get("patientId");
                         if (patId != null) {
                             Map pat = restTemplate.getForObject(
